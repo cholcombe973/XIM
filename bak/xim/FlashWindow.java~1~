@@ -1,0 +1,21 @@
+package xim;
+
+import java.awt.event.*;
+import java.awt.*;
+
+public class FlashWindowListener implements ActionListener{
+  private Window chatWindow;
+  private native void flashWindow(Window chatWindow);
+
+  public FlashWindowListener(Window chatWindow) {
+    this.chatWindow = chatWindow;
+  }
+  public void actionPerformed(ActionEvent e){
+    flashWindow(chatWindow);
+  }
+  static{
+    System.loadLibrary("xim");
+  }
+
+
+}

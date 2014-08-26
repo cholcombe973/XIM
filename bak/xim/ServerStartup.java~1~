@@ -1,0 +1,21 @@
+package xim;
+
+public class ServerStartup extends Thread {
+  private String data;
+
+  public void run(){
+    data = recieve();
+  }
+  public String returnData(){
+    return data;
+  }
+  private String recieve(){
+    RecieveData r = new RecieveData(5329);
+    r.start();
+    JavaZoom zoom = new JavaZoom();
+    zoom.play("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imrcv.mp3");
+    zoom.start();
+    return r.getData();
+  }
+
+}

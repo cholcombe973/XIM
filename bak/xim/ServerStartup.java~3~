@@ -1,0 +1,15 @@
+package xim;
+
+public class ServerStartup {
+  private String data;
+  private RecieveData r = new RecieveData(5329);
+
+  public String returnData(){
+    return r.getData();
+  }
+  private String recieve(){
+    r.start();
+    return r.getData();
+  }
+
+}

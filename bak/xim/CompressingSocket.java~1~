@@ -1,0 +1,40 @@
+package xim;
+
+import java.net.*;
+import java.io.*;
+
+public class CompressingSocket extends Socket {
+  private InputStream compressingInputStream;
+  private OutputStream compressingOutputStream;
+
+  public CompressingSocket() throws IOException{
+    }
+    public CompressingSocket(String host, int port) throws IOException{
+      super(host,port);
+    }
+    public InputStream getInputStream() throws IOException{
+      if(null== compressingInputStream){
+        InputStream originalInputStream = super.getInputStream();
+        compressingInputStream = new CompressingInputStream(originalInputStream);
+      }
+      return compressingInputStream;
+    }
+    public OutputStream getOutputStream( ) throws IOException{
+      if (null==compressingOutputStream) {
+        OutputStream originalOutputStream =
+            super.getOutputStream( );
+        compressingOutputStream= new CompressingOutputStream(originalOutputStream);
+      }
+      return compressingOutputStream;
+    }
+    public synchronized void close( ) throws IOException {
+      if(null!=compressingOutputStream) {
+        compressingOutputStream.flush( );
+        compressingOutputStream.close( );
+      }
+      if(null!=compressingInputStream) {
+        compressingInputStream.close( );
+      }
+    }
+}
+

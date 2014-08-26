@@ -1,0 +1,71 @@
+package xim;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class ManageBuddies extends JFrame{
+  private XimFrame f;
+  private JPanel contentPane;
+  private JButton jButtonAddBuddy = new JButton();
+  private JLabel jLabel1 = new JLabel();
+  private JLabel jLabel2 = new JLabel();
+  private JTextField jTextFieldUser = new JTextField();
+  private JTextField jTextFieldIP = new JTextField();
+  private Manager m;
+  private JOptionPane jOptionPane = new JOptionPane();
+
+  //Construct the frame
+  public ManageBuddies() {
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    try {
+      jbInit();
+    }
+    catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  //Component initialization
+  private void jbInit() throws Exception  {
+    contentPane = (JPanel) this.getContentPane();
+    jButtonAddBuddy.setBounds(new Rectangle(237, 160, 100, 27));
+    jButtonAddBuddy.setText("Add Buddy");
+    jButtonAddBuddy.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonAddBuddy_actionPerformed(e);
+      }
+    });
+    this.setTitle("Buddy Manager");
+    this.setSize(new Dimension(400, 229));
+    contentPane.setLayout(null);
+    jLabel1.setText("UserName:");
+    jLabel1.setBounds(new Rectangle(43, 33, 97, 29));
+    jLabel2.setText("User IP Address:");
+    jLabel2.setBounds(new Rectangle(43, 69, 97, 21));
+    jTextFieldUser.setBounds(new Rectangle(209, 38, 136, 22));
+    jTextFieldIP.setBounds(new Rectangle(209, 69, 137, 20));
+    contentPane.add(jLabel1, null);
+    contentPane.add(jLabel2, null);
+    contentPane.add(jButtonAddBuddy, null);
+    contentPane.add(jTextFieldUser, null);
+    contentPane.add(jTextFieldIP, null);
+  }
+  private void jButtonAddBuddy_actionPerformed(ActionEvent e) {
+    // handle all the collection of data here and setup buddy list.
+    String ip = jTextFieldIP.getText();
+    String userName = jTextFieldUser.getText();
+    if(!m.addUser(userName,ip)){
+      JOptionPane.showMessageDialog(jOptionPane,"User already added");
+    }
+    jTextFieldIP.setText("");
+    jTextFieldUser.setText("");
+  }
+  public void passReference(XimFrame f){
+    this.f = f;
+  }
+  public void PassManagerReference(Manager m){
+    this.m = m;
+  }
+}
+
+

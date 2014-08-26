@@ -1,0 +1,90 @@
+package xim;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.io.*;
+
+public class PrivateMsgWindow extends JFrame {
+  // This window needs to be linked to a particular person in the jList
+  private JPanel contentPane;
+  private JButton jButtonSend = new JButton();
+  private JTextArea jTextPane1 = new JTextArea(5,30);
+  private JTextArea jTextPane2 = new JTextArea(5,30);
+  public JScrollPane jScrollPane1 = new JScrollPane(jTextPane2);
+  private JScrollPane jScrollPane2 = new JScrollPane(jTextPane1);
+  private CoreReceive cr;
+  private String ip;
+  private File send = new File("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imsend.mp3");
+  private JMenuBar jMenuBar1 = new JMenuBar();
+  private JMenu jMenuFile = new JMenu();
+  private JMenuItem jMenuItemExit = new JMenuItem();
+
+  //Construct the frame
+  public PrivateMsgWindow(String ip,CoreReceive cr) {
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    this.cr =cr;
+    this.ip = ip;
+    try {
+      jbInit();
+    }
+    catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  //Component initialization
+  private void jbInit() throws Exception  {
+    contentPane = (JPanel) this.getContentPane();
+    jButtonSend.setBounds(new Rectangle(264, 307, 82, 33));
+    jButtonSend.setText("Send");
+    jButtonSend.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonSend_actionPerformed();
+      }
+    });
+    this.setTitle("Private Message Window");
+    this.setSize(new Dimension(395, 400));
+    contentPane.setLayout(null);
+    jMenuFile.setText("File");
+    jMenuItemExit.setText("Exit");
+    jMenuItemExit.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jMenuItemExit_actionPerformed(e);
+      }
+    });
+    jScrollPane1.setBounds(new Rectangle(26, 17, 351, 132));
+    jScrollPane2.setBounds(new Rectangle(27, 169, 346, 126));
+    contentPane.add(jButtonSend, null);
+    contentPane.add(jScrollPane2, null);
+    contentPane.add(jScrollPane1, null);
+    jTextPane1.setLineWrap(true);
+    jTextPane1.setWrapStyleWord(true);
+    jTextPane1.addKeyListener(new KeyAdapter(this));
+    jTextPane2.setLineWrap(true);
+    jTextPane2.setWrapStyleWord(true);
+    jTextPane2.setEditable(false);
+
+  }
+  private void fillTextPane(String s){
+    jTextPane2.setText(jTextPane2.getText()+"\n"+s);
+  }
+  public void updateWindow(String content){
+    fillTextPane(content);
+  }
+  public void jButtonSend_actionPerformed(){
+    if(jTextPane1.getText().length()>0){
+      fillTextPane(cr.privateMsg(jTextPane1.getText(),ip));
+      File f = cr.getSendFile();
+      if(f!=null){
+        send = f;
+      }
+      jTextPane1.setText("");
+      JavaZoom zoom = new JavaZoom();
+      zoom.play(send.toString());
+      zoom.start();
+    }
+  }
+  private void jMenuItemExit_actionPerformed(ActionEvent e) {
+    this.dispose(); //save some resources
+  }
+}

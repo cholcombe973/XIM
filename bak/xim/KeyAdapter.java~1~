@@ -1,0 +1,20 @@
+package xim;
+
+import java.awt.event.*;
+
+public class KeyAdapter implements KeyListener{
+  private MsgWindow w;
+
+  public KeyAdapter(MsgWindow w){
+    this.w = w;
+  }
+  public void keyTyped(KeyEvent e){}
+  public void keyReleased(KeyEvent e){}
+  public void keyPressed(KeyEvent e){
+    if((e.getKeyCode() == KeyEvent.VK_ENTER)&&(e.getModifiers() == InputEvent.CTRL_MASK)){
+      //If user hits control+enter send the msg
+      System.out.println("Control+Enter pressed");
+      w.jButtonSend_actionPerformed();
+    }
+  }
+}

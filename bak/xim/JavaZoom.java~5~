@@ -1,0 +1,42 @@
+package xim;
+
+import javazoom.jl.player.*;
+import javazoom.jl.decoder.JavaLayerException;
+import java.io.*;
+
+public class JavaZoom extends Thread{
+  private Player player = null;
+  private FileInputStream stream;
+  private String fileName;
+  private File file;
+  private CoreReceive cr;
+
+  public JavaZoom(CoreReceive cr){
+    this.cr = cr;
+    this.setName("Sound Player");
+  }
+  public void play(String Filename){
+    fileName = Filename;
+  }
+  public void stopPlaying(){
+    player.close();
+  }
+  public void StartPlaying(){
+    try{
+      player.play();
+      }catch(JavaLayerException e){}
+  }
+  public void run(){
+    try{
+      stream = new FileInputStream(fileName);
+      file = new File(fileName);
+      player = new Player(stream);
+      player.play();
+      //      stream.close();
+      //      player.close();
+      cr.soundPlaying = false;
+    }
+    catch(IOException e){}
+    catch (Exception e){}
+  }
+}

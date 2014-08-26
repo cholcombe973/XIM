@@ -1,0 +1,7 @@
+package xim;
+
+public class Untitled1 extends Thread {
+  public static void main(String[] args) {
+    System.out.println("whatever you piece of shit");
+  }
+}

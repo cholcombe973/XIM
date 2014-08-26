@@ -1,0 +1,19 @@
+package xim;
+
+import java.util.*;
+import java.io.*;
+
+public class JarResourceLoader {
+
+  public JarResourceLoader() {
+
+  }
+  public void showResources(){
+    ClassLoader cl = getClass().getClassLoader();
+    try {
+      Enumeration e = cl.getResources("/");
+      while(e.hasMoreElements())
+        System.out.println("Element: " + e.nextElement());
+    }catch (IOException ex) {System.out.println("IOException in JarResourceLoader showResources(): " + ex);}
+  }
+}

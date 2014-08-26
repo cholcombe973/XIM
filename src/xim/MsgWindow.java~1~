@@ -1,0 +1,94 @@
+package xim;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.net.*;
+import java.io.*;
+
+public class MsgWindow extends JFrame {
+  private JPanel contentPane;
+  private JButton jButtonSend = new JButton();
+  private JTextArea jTextPane1 = new JTextArea(5,30);
+  private JTextArea jTextPane2 = new JTextArea(5,30);
+  private String ipAddress = "192.168.1.103";
+  private RecieveData r = new RecieveData(4163,this);
+  private JScrollPane jScrollPane1 = new JScrollPane(jTextPane2);
+  private JScrollPane jScrollPane2 = new JScrollPane(jTextPane1);
+
+  //Construct the frame
+  public MsgWindow() {
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    try {
+      jbInit();
+    }
+    catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  //Component initialization
+  private void jbInit() throws Exception  {
+    contentPane = (JPanel) this.getContentPane();
+    jButtonSend.setBounds(new Rectangle(264, 307, 82, 33));
+    jButtonSend.setText("Send");
+    jButtonSend.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonSend_actionPerformed(e);
+      }
+    });
+    this.setTitle("Send Message");
+    this.setSize(new Dimension(395, 400));
+    contentPane.setLayout(null);
+    jScrollPane1.setBounds(new Rectangle(26, 17, 351, 132));
+    jScrollPane2.setBounds(new Rectangle(27, 169, 346, 126));
+    contentPane.add(jButtonSend, null);
+    contentPane.add(jScrollPane2, null);
+    contentPane.add(jScrollPane1, null);
+  }
+  private void fillTextPane(String s){
+    jTextPane2.setText(jTextPane2.getText()+"\n"+s);
+  }
+  private void jButtonSend_actionPerformed(ActionEvent e) {
+    String test = jTextPane1.getText();
+    byte[] testBytes = test.getBytes();
+    //Sending data here...
+    send(testBytes);
+    jTextPane1.setText("");
+    fillTextPane(test);
+    Cursor c = new Cursor(Cursor.TEXT_CURSOR);
+    jTextPane1.setCursor(c);
+
+    //Recieving data here...
+//    Beginreceive();
+  }
+  private void send(byte[] testBytes){
+/*
+    SendData s = new SendData(ipAddress,5328);
+    s.LoadData(testBytes);
+    s.start();
+    JavaZoom zoom = new JavaZoom();
+    zoom.play("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imsend.mp3");
+    zoom.start();
+  */
+    NewSender s = new NewSender(4162,"192.168.0.255",testBytes);
+    s.start();
+    JavaZoom zoom = new JavaZoom();
+    zoom.play("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imsend.mp3");
+    zoom.start();
+    try{
+      Robot r = new Robot();
+      r.mouseMove(0,0);
+      r.mouseMove(10,10);
+    }catch(AWTException e){System.out.println("You's a HO");}
+  }
+
+  public void Beginreceive(){
+    r.start();
+  }
+  public void receive(){
+    Update(r.getData());
+  }
+  public void Update(String s){
+    fillTextPane(s);
+  }
+}

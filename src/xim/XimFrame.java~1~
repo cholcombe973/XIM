@@ -1,0 +1,166 @@
+package xim;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class XimFrame extends JFrame {
+  private JPanel contentPane;
+  private JMenuBar jMenuBar1 = new JMenuBar();
+  private JMenu jMenuFile = new JMenu();
+  private JMenuItem jMenuFileExit = new JMenuItem();
+  private JMenu jMenuHelp = new JMenu();
+  private JMenuItem jMenuHelpAbout = new JMenuItem();
+  private JButton jButtonMsg = new JButton();
+  private JList jListBuddies;
+  private JButton jButtonAddBuddy = new JButton();
+  private JScrollPane jScrollPane1;
+  private DefaultListModel listModel;
+  private JButton jButton1 = new JButton();
+  private CoreReceive cr;
+  //Construct the frame
+  public XimFrame() {
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    try {
+      jbInit();
+    }
+    catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  //Component initialization
+  private void jbInit() throws Exception  {
+    listModel = new DefaultListModel();
+    listModel.addElement("Buddy1");
+    listModel.addElement("Buddy2");
+    jListBuddies = new JList(listModel);
+    jListBuddies.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    jScrollPane1 = new JScrollPane(jListBuddies);
+    //setIconImage(Toolkit.getDefaultToolkit().createImage(XimFrame.class.getResource("[Your Icon]")));
+    contentPane = (JPanel) this.getContentPane();
+    contentPane.setLayout(null);
+    this.setSize(new Dimension(244, 490));
+    this.setTitle("XIM");
+    jMenuFile.setText("File");
+    jMenuFileExit.setText("Exit");
+    jMenuFileExit.addActionListener(new ActionListener()  {
+      public void actionPerformed(ActionEvent e) {
+        jMenuFileExit_actionPerformed(e);
+      }
+    });
+    jMenuHelp.setText("Help");
+    jMenuHelpAbout.setText("About");
+    jMenuHelpAbout.addActionListener(new ActionListener()  {
+      public void actionPerformed(ActionEvent e) {
+        jMenuHelpAbout_actionPerformed(e);
+      }
+    });
+    jButtonMsg.setBounds(new Rectangle(9, 360, 119, 27));
+    jButtonMsg.setText("Send Message");
+    jButtonMsg.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonMsg_actionPerformed(e);
+      }
+    });
+    jButtonAddBuddy.setBounds(new Rectangle(9, 328, 119, 27));
+    jButtonAddBuddy.setText("Add Buddy");
+    jButtonAddBuddy.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonAddBuddy_actionPerformed(e);
+      }
+    });
+    jScrollPane1.setBounds(new Rectangle(148, 10, 78, 400));
+    jButton1.setBounds(new Rectangle(32, 76, 84, 26));
+    jButton1.setText("Test");
+    jButton1.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButton1_actionPerformed(e);
+      }
+    });
+    jMenuFile.add(jMenuFileExit);
+    jMenuHelp.add(jMenuHelpAbout);
+    jMenuBar1.add(jMenuFile);
+    jMenuBar1.add(jMenuHelp);
+    contentPane.add(jButtonMsg, null);
+    contentPane.add(jButtonAddBuddy, null);
+    contentPane.add(jScrollPane1, null);
+    contentPane.add(jButton1, null);
+    this.setJMenuBar(jMenuBar1);
+  }
+  //File | Exit action performed
+  public void jMenuFileExit_actionPerformed(ActionEvent e) {
+    System.exit(0);
+  }
+  //Help | About action performed
+  public void jMenuHelpAbout_actionPerformed(ActionEvent e) {
+    XimFrame_AboutBox dlg = new XimFrame_AboutBox(this);
+    Dimension dlgSize = dlg.getPreferredSize();
+    Dimension frmSize = getSize();
+    Point loc = getLocation();
+    dlg.setLocation((frmSize.width - dlgSize.width) / 2 + loc.x, (frmSize.height - dlgSize.height) / 2 + loc.y);
+    dlg.setModal(true);
+    dlg.pack();
+    dlg.show();
+  }
+  //Overridden so we can exit when window is closed
+  protected void processWindowEvent(WindowEvent e) {
+    super.processWindowEvent(e);
+    if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+      jMenuFileExit_actionPerformed(null);
+    }
+  }
+  void jButtonMsg_actionPerformed(ActionEvent e) {
+    MsgWindow frame = new MsgWindow();
+    frame.validate();
+    //Center the window
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    Dimension frameSize = frame.getSize();
+    if (frameSize.height > screenSize.height) {
+      frameSize.height = screenSize.height;
+    }
+    if (frameSize.width > screenSize.width) {
+      frameSize.width = screenSize.width;
+    }
+    frame.setLocation(0,0);
+    frame.setVisible(true);
+    frame.SetReceive(cr);
+/*
+    //Temporary code
+    frame.Beginreceive();
+    NewReceiver r = new NewReceiver(frame,4162);
+    r.start();
+*/
+  }
+  public void SetReceive(CoreReceive cr){
+   this.cr = cr;
+  }
+  void jButtonAddBuddy_actionPerformed(ActionEvent e) {
+    ManageBuddies frame = new ManageBuddies();
+    frame.validate();
+    //Center the window
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    Dimension frameSize = frame.getSize();
+    if (frameSize.height > screenSize.height) {
+      frameSize.height = screenSize.height;
+    }
+    if (frameSize.width > screenSize.width) {
+      frameSize.width = screenSize.width;
+    }
+    frame.setLocation(0,0);
+    frame.setVisible(true);
+  }
+  public void addBuddy(String userName){
+
+  }
+  void jButton1_actionPerformed(ActionEvent e) {
+    int index = jListBuddies.getSelectedIndex();
+    int size = listModel.getSize();
+    //If no selection or if item in last position is selected,
+    //add the new hire to end of list, and select new hire.
+    if (index == -1 || (index+1 == size)) {
+      listModel.addElement("New Buddy");
+      jListBuddies.setSelectedIndex(size);
+    }
+  }
+
+}

@@ -1,0 +1,49 @@
+package xim;
+
+import java.nio.*;
+import java.nio.channels.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class NonBlockTCP extends Thread {
+  private int port;
+
+  public NonBlockTCP(int port){
+    this.port = port;
+  }
+
+  public void run(){
+   //shit to do
+    ByteBuffer dst = ByteBuffer.allocate(1024);
+    ByteBuffer src = ByteBuffer.allocateDirect(25);
+    src.put("hello".getBytes());
+    try{
+      ServerSocketChannel sc = ServerSocketChannel.open();
+      sc.configureBlocking(false);
+      ServerSocket ss = new ServerSocket(port);
+      InetAddress ia = InetAddress.getLocalHost();
+      InetSocketAddress isa = new InetSocketAddress(ia,port);
+      ss.bind(isa);
+      Selector selector = Selector.open();
+      sc.register(selector,SelectionKey.OP_ACCEPT);
+      while(selector.isOpen()){
+        int n = selector.select(0);
+        Iterator it = selector.selectedKeys().iterator();
+        while(selector.selectedKeys().size() > 0){
+          SelectionKey key = (SelectionKey)it.next();
+          if(key.isAcceptable()){
+            ServerSocketChannel channel = (ServerSocketChannel)key.channel();
+            SocketChannel s = channel.accept();
+            s.write(src);
+            s.close();
+            //RandomAccessFile rf = new RandomAccessFile("","r");
+            //FileChannel fc = rf.getChannel();
+
+          }
+        }
+
+      }
+    }catch(IOException e){System.out.println("IOException in NonBlockTCP: " + e );}
+  }
+}

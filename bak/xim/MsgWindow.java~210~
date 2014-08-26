@@ -1,0 +1,176 @@
+package xim;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.text.*;
+//import java.net.*;
+import java.io.*;
+import java.util.*;  //for hashtable
+
+public class MsgWindow extends JFrame {
+  private JPanel contentPane;
+  private JButton jButtonSend = new JButton();
+  private JTextPane jTextPane1 = new JTextPane();
+  private JTextPane jTextPane2 = new JTextPane();
+  private JScrollPane jScrollPane1 = new JScrollPane(jTextPane2);
+  private JScrollPane jScrollPane2 = new JScrollPane(jTextPane1);
+  private CoreReceive cr;
+  private File send = new File("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imsend.mp3");
+  private Hashtable actions;
+  private JMenuBar jMenuBar1 = new JMenuBar();
+  private JMenu jMenuFile = new JMenu();
+  private JMenuItem jMenuItemExit = new JMenuItem();
+  private JMenu jMenuEdit = new JMenu();
+  private JMenu jMenuStyle = new JMenu();
+  public boolean msgWindowSoundPlaying = false;
+
+  private FlashWindow flashW;
+  private boolean focused;
+  private ReferenceManager rm;
+
+  //Construct the frame
+  public MsgWindow() {
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    try {
+      jbInit();
+    }catch(Exception e) {e.printStackTrace();}
+  }
+  public MsgWindow(ReferenceManager rm){
+    this.rm = rm;
+    enableEvents(AWTEvent.WINDOW_EVENT_MASK);
+    try {
+      jbInit();
+    }catch(Exception e) {e.printStackTrace();}
+  }
+  //Component initialization
+  private void jbInit() throws Exception  {
+    createActionTable(jTextPane1);
+    contentPane = (JPanel) this.getContentPane();
+    jButtonSend.setBounds(new Rectangle(264, 307, 82, 33));
+    jButtonSend.setText("Send");
+    jButtonSend.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jButtonSend_actionPerformed();
+      }
+    });
+    this.setTitle("Send Message");
+    this.setSize(new Dimension(395, 400));
+    contentPane.setLayout(null);
+    jScrollPane1.setBounds(new Rectangle(26, 17, 351, 132));
+    jScrollPane2.setBounds(new Rectangle(27, 169, 346, 126));
+    jMenuFile.setText("File");
+    jMenuItemExit.setText("Exit");
+    jMenuItemExit.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        jMenuItemExit_actionPerformed(e);
+      }
+    });
+    jMenuEdit.setText("Edit");
+    jMenuStyle.setText("Format");
+    contentPane.add(jButtonSend, null);
+    contentPane.add(jScrollPane2, null);
+    contentPane.add(jScrollPane1, null);
+    jMenuBar1.add(jMenuFile);
+    jMenuBar1.add(jMenuEdit);
+    jMenuBar1.add(jMenuStyle);
+    jMenuFile.addSeparator();
+    jMenuFile.add(jMenuItemExit);
+    jTextPane1.addKeyListener(new KeyAdapter(this));
+    jTextPane2.setEditable(false);
+    jMenuEdit.addSeparator();
+    jMenuEdit.add(getActionByName(DefaultEditorKit.cutAction));
+    jMenuEdit.add(getActionByName(DefaultEditorKit.copyAction));
+    jMenuEdit.add(getActionByName(DefaultEditorKit.pasteAction));
+    jMenuEdit.add(getActionByName(DefaultEditorKit.selectAllAction));
+    Action boldAction = new StyledEditorKit.BoldAction();
+    boldAction.putValue(Action.NAME,"Bold");
+    jMenuStyle.add(boldAction);
+    Action italicAction = new StyledEditorKit.ItalicAction();
+    italicAction.putValue(Action.NAME,"Italic");
+    jMenuStyle.add(italicAction);
+    Action underlineAction = new StyledEditorKit.UnderlineAction();
+    underlineAction.putValue(Action.NAME,"Underline");
+    jMenuStyle.add(underlineAction);
+    //font actions
+    Action fontAction = new StyledEditorKit.FontSizeAction("Font 10",10);
+    jMenuStyle.add(fontAction);
+    Action fontAction1 = new StyledEditorKit.FontSizeAction("Font 12",12);
+    jMenuStyle.add(fontAction1);
+    Action fontAction2 = new StyledEditorKit.FontSizeAction("Font 14",14);
+    jMenuStyle.add(fontAction2);
+    Action fontAction3 = new StyledEditorKit.FontSizeAction("Font 16",16);
+    jMenuStyle.add(fontAction3);
+    Action fontAction4 = new StyledEditorKit.FontSizeAction("Font 18",18);
+    jMenuStyle.add(fontAction4);
+    //end font actions
+    this.setJMenuBar(jMenuBar1);
+
+    flashW = new FlashWindow(this);
+    this.addWindowFocusListener(new WindowFocusListener(){
+      public void windowGainedFocus(WindowEvent e){
+        focused = true;
+        flashW.flash(false);
+      }
+      public void windowLostFocus(WindowEvent e)  {
+        focused = false;
+      }
+    });
+  }
+  private void fillTextPane(String s){
+    jTextPane2.setText(jTextPane2.getText()+"\n"+s);
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run(){
+        jScrollPane1.getVerticalScrollBar().setValue(jScrollPane1.getVerticalScrollBar().getMaximum());
+      }
+    });
+    if(!focused){
+      flashW.flash(true);
+    }
+  }
+  public void jButtonSend_actionPerformed() {
+    if(jTextPane1.getText().length()>0){
+      cr.setupBuffer(jTextPane1.getText());
+      File f = cr.getSendFile();
+      if(f!=null){
+        this.send = f;
+      }
+      jTextPane1.setText("");
+      if(!msgWindowSoundPlaying){
+        msgWindowSoundPlaying = true;
+        JavaZoom zoom = new JavaZoom(this);
+        zoom.playStream(((JarResourceLoader)rm.getReference("JarResourceLoader")).getResourceStream("send.wav"));
+        zoom.start();
+      }
+    }
+    Cursor c = new Cursor(Cursor.TEXT_CURSOR);
+    jTextPane1.setCursor(c);
+    setScrollBar();
+  }
+  private void setScrollBar(){
+    jScrollPane1.getVerticalScrollBar().setValue(jScrollPane1.getVerticalScrollBar().getMaximum());
+  }
+  public void update(String s){
+    fillTextPane(s);
+  }
+  public void setReceive(CoreReceive cr){
+    this.cr = cr;
+  }
+  public void setSendFile(File file){
+    this.send = file;
+  }
+  private void createActionTable(JTextComponent textComponent){
+    actions = new Hashtable();
+    Action[] actionsArray = textComponent.getActions();
+    for(int i=0;i<actionsArray.length;i++){
+      Action a = actionsArray[i];
+      actions.put(a.getValue(Action.NAME),a);
+    }
+  }
+  private Action getActionByName(String name){
+    return (Action)(actions.get(name));
+  }
+  private void jMenuItemExit_actionPerformed(ActionEvent e) {
+    this.setVisible(false);
+  }
+}

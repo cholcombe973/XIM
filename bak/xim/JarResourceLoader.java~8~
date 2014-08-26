@@ -1,0 +1,32 @@
+package xim;
+
+import java.io.*;
+import java.util.*;
+import java.util.jar.*;
+
+public class JarResourceLoader {
+
+  public JarResourceLoader() {
+
+  }
+  public void showResources(){
+    //new approach
+    try {
+      JarFile j = new JarFile("XIM.jar");
+      JarEntry je  = j.getJarEntry("send.wav");
+      System.out.println("send.wave size: " + je.getSize());
+    }catch (IOException ex1) {System.out.println("IOException in JarResourceLoader showResources(): " + ex1);}
+/*
+    ClassLoader cl = getClass().getClassLoader();
+    ClassLoader scl = cl.getSystemClassLoader();
+    try {
+      Enumeration e = cl.getResources("");
+      while(e.hasMoreElements())
+        System.out.println("Element: " + e.nextElement());
+      e = scl.getResources("");
+      while(e.hasMoreElements())
+        System.out.println("System Element: " + e.nextElement());
+    }catch (IOException ex) {System.out.println("IOException in JarResourceLoader showResources(): " + ex);}
+*/
+  }
+}

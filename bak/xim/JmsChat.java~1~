@@ -1,0 +1,187 @@
+package xim;
+
+import javax.jms.*;
+import javax.naming.*;
+import java.util.Hashtable;
+
+/**
+ * <p>Title: </p>
+ * <p>Description: </p>
+ * <p>Copyright: Copyright (c) 2002</p>
+ * <p>Company: </p>
+ * @author unascribed
+ * @version 1.0
+ *
+ * Use this class to send and receive point-to-point messages.
+ * To send a text message:
+ * <code>
+ * JmsChat jmsChat = new JmsChat();
+ * jmsChat.setEnvironment(hashtable);  //Specify any vendor-specific JNDI settings here
+ * jmsChat.sendText("Hello world");
+ * jmsChat.close(); //Release resources
+ * </code>
+ *
+ * <code>
+ * To receive a message:
+ * JmsChat jmsChat = new JmsChat();
+ * jmsChat.getQueueReceiver();
+ * </code>
+ */
+
+public class JmsChat implements MessageListener {
+  static private Context context = null;
+  private boolean transacted = false;
+  private int acknowledgementMode = Session.AUTO_ACKNOWLEDGE;
+  private Hashtable environment = null;
+  private QueueConnectionFactory queueConnectionFactory = null;
+  private QueueConnection queueConnection = null;
+  private QueueSession queueSession = null;
+  private QueueSender queueSender = null;
+  private QueueReceiver queueReceiver = null;
+  private Queue queue = null;
+  private String queueConnectionFactoryName = "FactoryConnection";
+  private String queueName = "CreateMessage";
+  public boolean isTransacted() {
+    return transacted;
+  }
+  public void setTransacted(boolean transacted) {
+    this.transacted = transacted;
+  }
+  public int getAcknowledgementMode() {
+    return acknowledgementMode;
+  }
+  public void setAcknowledgementMode(int acknowledgementMode) {
+    this.acknowledgementMode = acknowledgementMode;
+  }
+  public Hashtable getEnvironment() {
+    return environment;
+  }
+  public void setEnvironment(Hashtable environment) {
+    this.environment = environment;
+  }
+  public String getQueueConnectionFactoryName() {
+    return queueConnectionFactoryName;
+  }
+  public void setQueueConnectionFactoryName(String queueConnectionFactoryName) {
+    this.queueConnectionFactoryName = queueConnectionFactoryName;
+  }
+  public String getQueueName() {
+    return queueName;
+  }
+  public void setQueueName(String queueName) {
+    this.queueName = queueName;
+  }
+  Context getContext() throws Exception {
+    if (context == null) {
+      try {
+        context = new InitialContext(environment);
+      }
+      catch(Exception ex) {
+        ex.printStackTrace();
+        throw ex;
+      }
+    }
+    return context;
+  }
+  public QueueConnectionFactory getQueueConnectionFactory() throws Exception {
+    if (queueConnectionFactory == null) {
+      Object obj = getContext().lookup(queueConnectionFactoryName);
+      queueConnectionFactory = (QueueConnectionFactory) obj;
+    }
+    return queueConnectionFactory;
+  }
+  public QueueConnection getQueueConnection() throws Exception {
+    if (queueConnection == null) {
+      queueConnection = getQueueConnectionFactory().createQueueConnection();
+      queueConnection.start();
+    }
+    return queueConnection;
+  }
+  public QueueSession getQueueSession() throws Exception {
+    if (queueSession == null) {
+      queueSession = getQueueConnection().createQueueSession(transacted, acknowledgementMode);
+    }
+    return queueSession;
+  }
+  public Queue getQueue() throws Exception {
+    if (queue == null) {
+      Object obj = getContext().lookup(queueName);
+      queue = (Queue) obj;
+    }
+    return queue;
+  }
+  public QueueSender getQueueSender() throws Exception {
+    if (queueSender == null) {
+      queueSender = getQueueSession().createSender(getQueue());
+    }
+    return queueSender;
+  }
+  public QueueReceiver getQueueReceiver() throws Exception {
+    if (queueReceiver == null) {
+      queueReceiver = getQueueSession().createReceiver(getQueue());
+      queueReceiver.setMessageListener(this);
+    }
+    return queueReceiver;
+  }
+  public void sendText(String message) throws Exception {
+    TextMessage textMessage = getQueueSession().createTextMessage();
+    textMessage.clearBody();
+    textMessage.setText(message);
+    getQueueSender().send(textMessage);
+    if (isTransacted()) {
+      getQueueSession().commit();
+    }
+  }
+  public void onMessage(Message message) {
+    if (message instanceof BytesMessage) {
+      BytesMessage bytesMessage = (BytesMessage) message;
+      //Process bytesMessage here
+    }
+    else {
+      if (message instanceof MapMessage) {
+        MapMessage mapMessage = (MapMessage) message;
+        //Process mapMessage here
+      }
+      else {
+        if (message instanceof ObjectMessage) {
+          ObjectMessage objectMessage = (ObjectMessage) message;
+          //Process objectMessage here
+        }
+        else {
+          if (message instanceof StreamMessage) {
+            StreamMessage streamMessage = (StreamMessage) message;
+            //Process streamMessage here
+          }
+          else {
+            if (message instanceof TextMessage) {
+              TextMessage textMessage = (TextMessage) message;
+              //Process textMessage here
+            }
+          }
+        }
+      }
+    }
+    try {
+      if (isTransacted()) {
+        getQueueSession().commit();
+      }
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+  public void close() throws Exception {
+    if (queueSender != null) {
+      queueSender.close();
+    }
+    if (queueReceiver != null) {
+      queueReceiver.close();
+    }
+    if (queueSession != null) {
+      queueSession.close();
+    }
+    if (queueConnection != null) {
+      queueConnection.close();
+    }
+  }
+}

@@ -1,0 +1,55 @@
+package xim;
+
+import javax.swing.UIManager;
+import java.awt.*;
+
+public class XIMApp {
+  private boolean packFrame = false;
+
+  //Construct the application
+  public XIMApp() {
+    //ReferenceManager handles multiple references floating around the place.
+    ReferenceManager rm = new ReferenceManager();
+    JarResourceLoader jrl = new JarResourceLoader("XIM.jar");
+    rm.putReference("JarResourceLoader",jrl);
+
+    XimFrame frame = new XimFrame(rm);
+    CoreReceive cr = new CoreReceive();
+    Manager mr = new Manager(frame,cr);
+    //All frames need to be setup inorder to work with reference variables
+
+    //Validate frames that have preset sizes
+    //Pack frames that have useful preferred size info, e.g. from their layout
+    if (packFrame) {
+      frame.pack();
+    }
+    else {
+      frame.validate();
+    }
+    //Center the window
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    Dimension frameSize = frame.getSize();
+    if (frameSize.height > screenSize.height) {
+      frameSize.height = screenSize.height;
+    }
+    if (frameSize.width > screenSize.width) {
+      frameSize.width = screenSize.width;
+    }
+    frame.setLocation((screenSize.width - frame.getWidth()),0);
+    frame.setVisible(true);
+    //Startup the receiver with the program
+    frame.setReceive(cr);
+    frame.passReferences(mr);
+    frame.displayUserDialog();
+    cr.start();
+    cr.passReference(frame,mr);
+  }
+  //Main method
+  public static void main(String[] args) {
+    try {
+      //Sun XP look and feel
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }catch(Exception e) {e.printStackTrace();}
+    new XIMApp();
+  }
+}

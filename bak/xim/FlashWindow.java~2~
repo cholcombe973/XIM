@@ -1,0 +1,21 @@
+package xim;
+
+//import java.awt.event.*;
+import java.awt.*;
+
+public class FlashWindow {
+  private Window chatWindow;
+  private native void flashWindow(Window chatWindow);
+
+  public FlashWindow(Window chatWindow) {
+    this.chatWindow = chatWindow;
+  }
+  public void flash(){
+    flashWindow(chatWindow);
+  }
+  static{
+    System.loadLibrary("xim");
+  }
+
+
+}

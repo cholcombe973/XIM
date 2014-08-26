@@ -1,0 +1,39 @@
+package xim;
+
+import java.net.*;
+import java.io.*;
+
+
+public class NewReceiver extends Thread {
+  private MsgWindow w;
+  private DatagramSocket ds;
+  private byte[] buff = new byte[1024];
+  private int port;
+
+  public NewReceiver(MsgWindow w,int receivePort){
+    this.w = w;
+    this.port = receivePort;
+    w.setSocket(ds);
+  }
+  public void sendUpdate(String s){
+    w.Update(s);
+  }
+  public void run(){
+    try{
+//      if(!ds.isBound()){
+        ds = new DatagramSocket(port);
+//      }
+      while(true){
+        String s = "";
+        DatagramPacket p = new DatagramPacket(buff, buff.length);
+        ds.receive(p);
+        for(int j=0;j < p.getLength(); j++){
+          s += (char)buff[j];
+        }
+        sendUpdate(s);
+      }
+      }catch(IOException e){System.out.println("IOException: " + e);}
+  }
+
+
+}

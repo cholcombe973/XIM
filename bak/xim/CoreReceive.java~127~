@@ -1,0 +1,292 @@
+package xim;
+
+import java.nio.channels.*;
+import java.nio.*;
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class CoreReceive extends Thread{
+  private MsgWindow w;
+  private XimFrame f;
+  private ManageBuddies mb;
+  private Manager m;
+  private ByteBuffer send = ByteBuffer.allocate(1024);
+  private DatagramChannel channel;
+  private int port = 4162;
+  private String inet;
+  private String address;
+  private String user;
+  private String imReceive="C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imrcv.mp3";
+  private File Send;
+  private File Receive;
+  public boolean soundPlaying = false;
+  //This is where it all happens with the sending, receiving and advertising is accomplished
+
+  public void setupBuffer(String msg){
+    send.clear();
+    send.put(user.getBytes());
+    send.put(msg.getBytes());
+    send.flip();
+    String returnMsg;
+    StringBuffer sb = new StringBuffer();
+    for(int i=0;i<send.limit();i++){
+      sb.append((char)send.get(i));
+    }
+    send.rewind();
+    returnMsg = sb.toString();
+    w.update(returnMsg);
+    try{
+      inet = InetAddress.getLocalHost().toString();
+      address = makeInetString( inet );
+      System.out.println("address: " + address);
+      DatagramSender ds = new DatagramSender(channel,send, new InetSocketAddress(InetAddress.getByName(address),port));  //Send the public msg
+      ds.start();
+      }catch(IOException e){System.out.println("IOException in setupBuffer: " + e);}
+  }
+  public String privateMsg(String msg, String ip){
+    ByteBuffer privateMsg = ByteBuffer.allocate(1024);
+    privateMsg.clear();
+    privateMsg.put("2".getBytes());
+    privateMsg.put(user.getBytes());
+    privateMsg.put(msg.getBytes());
+    privateMsg.flip();
+    String returnMsg;
+    StringBuffer sb = new StringBuffer();
+    for(int i=0;i<privateMsg.limit();i++){
+      sb.append((char)privateMsg.get(i));
+    }
+    privateMsg.rewind();
+    returnMsg = sb.toString();
+    try{
+      DatagramSender ds = new DatagramSender(channel,privateMsg,new InetSocketAddress(InetAddress.getByName(ip),port)); //send the private msg
+      ds.start();
+    }catch(IOException e){System.out.println("IOException in privateMsg: " + e);}
+    return returnMsg.substring(returnMsg.indexOf('['),returnMsg.length());
+  }
+  public void sendDirectConnectData(String msg, String ip,int sendPort, long fileSize){
+    ByteBuffer directConnect = ByteBuffer.allocate(1024);
+    directConnect.clear();
+    directConnect.put("3".getBytes());
+    directConnect.put(msg.getBytes());
+    directConnect.put(":".getBytes());
+    directConnect.put((byte)sendPort);
+    directConnect.put(":".getBytes());
+    directConnect.put((byte)fileSize);
+    directConnect.flip();
+    try{
+      DatagramSender ds = new DatagramSender(channel,directConnect,new InetSocketAddress(InetAddress.getByName(ip),port));
+      ds.start();
+      }catch(IOException e){System.out.println("IOException in sendDirectConnectData: " + e);}
+  }
+  public void sendKillMessage(){
+    //Sends a UDP packet stateing that the client is leaving the group
+    try{
+      ByteBuffer killMsg = ByteBuffer.allocate(10);
+      killMsg.put("0".getBytes());
+      killMsg.flip();
+      inet = InetAddress.getLocalHost().toString();
+      address = makeInetString( inet );
+      DatagramSender ds = new DatagramSender(channel,killMsg, new InetSocketAddress(InetAddress.getByName(address),port));  //start the sending service
+      ds.start();
+    }catch(IOException e){System.out.println("IOException in KillMessage: " + e);}
+  }
+  public void run(){
+    //Allocate buffers
+    ByteBuffer dst = ByteBuffer.allocateDirect(1024);
+    try{
+      inet = InetAddress.getLocalHost().toString();
+      channel = channel.open();
+      channel.configureBlocking(false);  //Configure for non-blocking I/0
+      DatagramSocket socket = channel.socket();
+      InetSocketAddress isA = new InetSocketAddress(InetAddress.getByName("0.0.0.0"),port);
+      socket.bind(isA);
+      DatagramAdvertise da = new DatagramAdvertise(channel);//Start sending advertisements of location
+      da.setUser(user);
+      da.start();
+      Selector selector = Selector.open();
+      channel.register(selector,SelectionKey.OP_READ);
+      String address = makeInetString( inet );
+      System.out.println("local address with 255: " + address);
+      while(selector.isOpen()){
+        int n = selector.select(0);
+        //Get set of ready objects
+        Iterator it = selector.selectedKeys().iterator();
+        //Look at each key in the set
+        while(selector.selectedKeys().size()>0){
+          SelectionKey key =(SelectionKey)it.next();
+          if(key.isReadable()){
+            //read what is ready
+            //Get Channel
+            DatagramChannel dChannel = (DatagramChannel)key.channel();
+            dst.clear();
+            SocketAddress a = dChannel.receive(dst);
+            System.out.println("Datapacket read from: " + a.toString() );
+            dst.flip();  //Make buffer readable
+            //If info is from local computer ignore it and break this while
+            if(compareAddresses(a.toString(),inet)){
+              break;
+            }
+            StringBuffer sb = new StringBuffer();
+            for(int i=0; i < dst.limit(); i++ ){
+              sb.append((char)dst.get(i)); //Append all data in packet to buffer
+              System.out.print((char)dst.get(i));
+            }
+            String socketString = a.toString();
+            identifyData(sb.toString(),socketString.substring(socketString.indexOf("/")+1,socketString.indexOf(":")));
+            //See if string has a UserName
+            //checkString(sb.toString(),socketString.substring(socketString.indexOf("/")+1,socketString.indexOf(":")));
+            if(checkForAdvertisements(sb.toString())){//If it's an advertisment drop the msg
+              if(w!=null){                            //make sure w is a valid reference
+                if(!soundPlaying){
+                  soundPlaying = true;
+                  JavaZoom zoom = new JavaZoom(this);
+                  zoom.play(imReceive);
+                  zoom.start();
+                }                                      //Play receive sound
+                w.update(sb.toString());              //Send data to MessageWindow
+              }
+              else{  //if public window isn't open, make a new instance and send data to it
+                if(!f.isPublicWindowOpen()){
+                  f.openPublicWindow();
+                  if(!soundPlaying){
+                    soundPlaying = true;
+                    JavaZoom zoom = new JavaZoom(this);
+                    zoom.play(imReceive);
+                    zoom.start();
+                  }
+                  w.update(sb.toString());
+                }
+              }
+            }
+          }//End if readable
+          it.remove();   //Remove key it's been handled
+        }//End while iterator
+      }//End while selector
+      }catch(IOException e){System.out.println("IOException: " + e);}
+  }
+  private boolean compareAddresses(String socket,String inet){
+    String s = socket.substring(socket.indexOf("/")+1,socket.indexOf(":"));
+    String t = inet.substring(inet.indexOf("/")+1,inet.length());
+    if(s.equalsIgnoreCase(t)){
+      return true;
+    }
+    System.out.println("SocketString: " + s + " InetString: " + t);
+    return false;
+  }
+  private String makeInetString(String inet)
+  {
+    String address = inet.substring(inet.indexOf("/")+1,inet.length()-(inet.length() - inet.lastIndexOf(".") - 1)).concat("255");
+    String sub = inet.substring(inet.lastIndexOf("/")+1,inet.lastIndexOf("."));
+    sub = sub.substring(0,sub.lastIndexOf('.'));
+    System.out.println("substring: " + sub);
+    System.out.println("inet: "+ inet);
+    return address;
+  }
+  /*
+  private void checkString(String source,String ip){ //handle packets with numbers at the beginning
+    String userName = new String();
+    if(isInt(source)&&!source.equalsIgnoreCase("0")){ //must have a number first and not be "0"
+      userName = source.substring(source.indexOf('[')+1,source.indexOf(']'));
+      m.addUser(userName,ip);
+    }
+    if(source.equalsIgnoreCase("0")){
+      m.removeUser(ip);
+    }
+    if(isInt(source)&& source.startsWith("2")){ //msg is private
+      String user = m.getUser(ip);  //get the username associated with this ip
+      if(m.isPrivateOpen(ip)){
+        PrivateMsgWindow pw = m.getWindow(user); //get the window reference for this user
+        String msg = source.substring(source.indexOf('['),source.length());
+        pw.updateWindow(msg); //update that user's window
+      }
+      else{
+        f.openPrivateWindow(ip);
+        PrivateMsgWindow pw = m.getWindow(user);
+        String msg = source.substring(source.indexOf('['),source.length());
+        pw.updateWindow(msg);
+      }
+    }
+  }
+  */
+  private boolean checkForAdvertisements(String source){ //filters out the advertisements
+    if(!isInt(source)){
+      return true;
+    }
+    return false;
+  }
+  public boolean isInt(String source){
+    try{
+      Integer.parseInt(source.substring(0,1));
+      return true;
+      }catch(NumberFormatException e){return false;}
+  }
+  public void passReference(XimFrame f,Manager m){
+    this.f = f;
+    this.m = m;
+  }
+  public void passBuddyReference(ManageBuddies mb){
+    this.mb = mb;
+  }
+  public void setUser(String user){
+    this.user = user;
+  }
+  public void passMsgWindowReference(MsgWindow w){
+    this.w = w;
+  }
+  public void setReceiveFile(File file){
+    imReceive = file.toString();
+    this.Receive = file;
+  }
+  public void setSendFile(File file){
+    //w.setSendFile(file);
+    this.Send = file;
+  }
+  public File getReceiveFile(){
+   return Receive;
+  }
+  public File getSendFile(){
+   return Send;
+  }
+  private void identifyData(String msg,String ip){
+    String source = msg;
+    try{
+      int n = Integer.parseInt(msg.substring(0,1));
+      switch(n){
+        case 0: System.out.println("O Msg");
+          //Kill message
+          m.removeUser(ip);
+          break;
+        case 1: System.out.println("1 Msg");
+          //advertisement
+          String userName = source.substring(source.indexOf('[')+1,source.indexOf(']'));
+          m.addUser(userName,ip);
+          break;
+        case 2: System.out.println("2 Msg");
+          //private message
+          String user = m.getUser(ip);  //get the username associated with this ip
+          if(m.isPrivateOpen(ip)){
+            PrivateMsgWindow pw = m.getWindow(user); //get the window reference for this user
+            String message = source.substring(source.indexOf('['),source.length());
+            pw.updateWindow(message); //update that user's window
+          }
+          else{
+            f.openPrivateWindow(ip); //open a new private window
+            PrivateMsgWindow pw = m.getWindow(user); //setup the user reference
+            String message = source.substring(source.indexOf('['),source.length());
+            pw.updateWindow(message); //update like usual
+          }
+          break;
+        case 3:
+          //Direct Connection Data
+          //sample message 3fileName:port:fileSize
+          String fileName = source.substring(1,source.indexOf(':'));
+          int port = Integer.parseInt(source.substring(source.indexOf(':') + 1,source.lastIndexOf(':')));
+          long fileSize = Integer.parseInt(source.substring(source.lastIndexOf(':')+1,source.length()));
+          TcpReceive receive = new TcpReceive(port,f,fileName,fileSize);
+          receive.start();
+          break;
+      }
+    }catch(NumberFormatException e){/* Public msg.*/return; }
+  }
+}

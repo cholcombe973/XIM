@@ -1,0 +1,51 @@
+package xim;
+
+import java.net.*;
+import java.io.*;
+
+public class RecieveData extends Thread {
+  private ServerSocket s;
+  private Socket so;
+  private int port;
+  private String Data = new String("");
+  private StringBuffer b;
+  private MsgWindow w;
+
+  public RecieveData(int port,MsgWindow w){
+    this.port = port;
+    this.w = w;
+  }
+  public String getData(){
+    return Data;
+  }
+  public void run(){
+    try{
+      s = new ServerSocket(port);
+      System.out.println("setup server on port: " + port);
+      System.out.println("listening...");
+      so = s.accept();
+      System.out.println("Got connection");
+      System.out.println("Local port: " + so.getLocalPort());
+    }catch(IOException e){System.out.println("IOException caught for Socket: " + e);}
+    try{
+      byte[] bbuf = new byte[4096];
+      InputStream in = so.getInputStream();
+      while(true){
+        int i = in.read(bbuf);
+        if(i<0){
+          break;
+        }
+        Data = "";
+        for(int j=0;j<i;j++){
+         Data += (char)bbuf[j];
+         System.out.print((char)bbuf[j]);
+       }
+         w.receive();
+         //play receive sound.
+         JavaZoom zoom = new JavaZoom();
+         zoom.play("C:\\Documents and Settings\\Chris Holcombe\\My Documents\\imrcv.mp3");
+         zoom.start();
+      }
+    }catch(IOException e){System.out.println("IOException caught for while: " + e);}
+  }
+}

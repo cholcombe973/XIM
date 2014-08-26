@@ -1,0 +1,28 @@
+package xim;
+
+import java.net.*;
+import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
+
+
+public class TcpSend extends Thread {
+  private Manager m;
+  private String userName;
+  private InetSocketAddress toAddress;
+  private int port;
+  private SocketChannel sc;
+
+  public TcpSend(String userName,Manager m,int port){
+    this.m = m;
+    this.userName = userName;
+    this.port = port;
+  }
+
+  public void run(){
+    String ip = m.getIP(userName);
+    try{
+      toAddress = new InetSocketAddress(InetAddress.getByName(ip),port);
+      }catch(UnknownHostException e){System.out.println("UnknownHostException: " + e);}
+  }
+}
